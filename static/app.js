@@ -285,8 +285,14 @@ function showAuth(){
 
 function boot(){
   INVITE_HASH = (location.pathname.match(/^\/j\/([^\/]+)/) || [])[1] || null;
+
+  // Защита: если уже перезагружались из-за версии в этой сессии — не повторяем
+  var reloaded = false;
+  try { reloaded = sessionStorage.getItem('ver_reloaded') === '1'; } catch(e){}
+
   api('/api/version').then(function(v){
-    if (v && v.version && v.version !== APP_VERSION){
+    if (v && v.version && v.version !== APP_VERSION && !reloaded){
+      try { sessionStorage.setItem('ver_reloaded', '1'); } catch(e){}
       try {
         if (window.caches && caches.keys) caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); });
         if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
@@ -295,8 +301,11 @@ function boot(){
       location.replace(location.pathname + '?v=' + Date.now());
       return;
     }
+    // Версия совпала или уже перезагружались — просто продолжаем
+    try { sessionStorage.removeItem('ver_reloaded'); } catch(e){}
     api('/api/me').then(function(u){ ME = u; start(); }).catch(function(){ showAuth(); });
   }).catch(function(){
+    // Если /api/version не отвечает — не зацикливаемся, просто запускаем
     api('/api/me').then(function(u){ ME = u; start(); }).catch(function(){ showAuth(); });
   });
 }
