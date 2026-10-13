@@ -24,7 +24,7 @@ app.secret_key = SESS_FILE.read_bytes()
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-APP_VERSION = '2.2'
+APP_VERSION = '2.3'
 
 @app.after_request
 def no_cache(resp):
